@@ -1,15 +1,26 @@
 import axios from "axios";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 
-axios.defaults.baseURL = 'https://66a79dbf53c13f22a3d0727a.mockapi.io/api/contacts'
+axios.defaults.baseURL = 'https://connections-api.goit.global/'
 
 
 export const fetchContacts = createAsyncThunk(
     'contacts/fetchAll',
     async (_, thunkAPI) => {
+        const state = thunkAPI.getState();
+        const token = state.auth.token; // Retrieve the token from the Redux state
+
+        if (!token) {
+            return thunkAPI.rejectWithValue('No token available');
+        }
+
         try {
-            const response = await axios.get('/contacts')
-            return response.data
+            const response = await axios.get('/contacts', {
+                headers: {
+                    Authorization: `Bearer ${token}`, // Include the token in the request headers
+                },
+            });
+            return response.data;
         } catch (e) {
             return thunkAPI.rejectWithValue(e.message)
         }

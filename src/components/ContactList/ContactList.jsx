@@ -33,6 +33,8 @@ import { getVisibleContacts } from '../../redux/selectors';
 function ContactList({ deleteInfo }) {
   const filteredContacts = useSelector(getVisibleContacts); // Use the selector
 
+  console.log(filteredContacts);
+
   return (
     <ul>
       {filteredContacts.map(filteredContact => (

@@ -1,67 +1,56 @@
-import React, { useEffect } from 'react';
-import ContactForm from './ContactForm/ContactForm';
-import ContactList from './ContactList/ContactList';
-import Filter from './Filter/Filter';
+import SharedLayout from '../Shared/SharedLayout';
+import HomePage from '../pages/HomePage';
+import React from 'react';
+import { Route, Routes } from 'react-router-dom';
+import LoginPage from '../pages/LoginPage';
+import RegisterPage from '../pages/RegisterPage';
+import { RestrictedRoute } from './RestrictedRoute/RestrictedRoute';
+import { PrivateRoute } from './PrivateRoute/PrivateRoute';
+import ContactsPage from 'pages/ContactsPage';
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { refreshUser } from '../redux/authOperations';
 
-import { useSelector, useDispatch } from 'react-redux';
-// import { addContact, deleteContact } from '../redux/contactSlice';
-import { setFilter } from '../redux/filterSlice';
-import { fetchContacts, addContact, deleteContact } from '../redux/operations';
-import {
-  getFilter,
-  getIsLoading,
-  getVisibleContacts,
-  getError,
-} from '../redux/selectors';
-
-function App() {
+const App = () => {
   const dispatch = useDispatch();
-  const contacts = useSelector(getVisibleContacts);
-  const filter = useSelector(getFilter);
-  const isLoading = useSelector(getIsLoading);
-  const error = useSelector(getError);
-
-  console.log(contacts);
-
-  // Save contacts to local storage whenever contacts state changes
-  // useEffect(() => {
-  //   localStorage.setItem('contacts', JSON.stringify(contacts));
-  // }, [contacts]);
 
   useEffect(() => {
-    dispatch(fetchContacts());
+    const token = localStorage.getItem('authToken');
+    console.log(token);
+    if (token) {
+      console.log('entered localstorage');
+      // Optionally dispatch refreshUser to validate and fetch user data
+      dispatch(refreshUser());
+    }
   }, [dispatch]);
 
-  const addInfo = newInfo => {
-    dispatch(addContact(newInfo));
-  };
-
-  const deleteInfo = id => {
-    dispatch(deleteContact(id));
-  };
-
-  const updateFilter = filterValue => {
-    dispatch(setFilter(filterValue));
-  };
-
-  //get the array of the filtered data from filter
-  // const filterContact = () => {
-  //   return contacts.filter(contact =>
-  //     contact.name.toLowerCase().includes(filter.toLowerCase())
-  //   ); //using includes returns the data every changes
-
-  //   // return contacts.filter(contact => contact.name.toLowerCase() === filter.toLowerCase()) {using this method only returns the data if the info is complete}
-  // };
-
   return (
-    <div>
-      <ContactForm addInfo={addInfo} contacts={contacts} />
-      <Filter filter={filter} updateFilter={updateFilter} />
-      {isLoading && <b>Loading...</b>}
-      {error && <b>Error: {error}</b>}
-      {contacts && <ContactList deleteInfo={deleteInfo} />}
-    </div>
+    <Routes>
+      <Route path="/" element={<SharedLayout />}>
+        <Route index element={<HomePage />} />
+
+        {/* CONTACTS PAGE IS RESTRICTED AND IS ONLY ACCESSIBLE BY SUCCESSFULLY REGISTERING IN THE REGISTER PAGE */}
+        <Route
+          path="/register"
+          element={
+            <RestrictedRoute redirectTo="/contacts" component={RegisterPage} />
+          }
+        />
+        {/* CONTACTS PAGE IS RESTRICTED AND IS ONLY ACCESSIBLE BY SUCCESSFULLY LOGGING IN THE LOGIN PAGE */}
+        <Route
+          path="/login"
+          element={
+            <RestrictedRoute redirectTo="/contacts" component={LoginPage} />
+          }
+        />
+      </Route>
+      {/* CONTACTS PAGE IS PRIVATE AND IS REDIRECTED TO LOGIN PAGE IF USER IS NOT AUTHENTICATED*/}
+      <Route
+        path="/contacts"
+        element={<PrivateRoute redirectTo="/login" component={ContactsPage} />}
+      />
+    </Routes>
   );
-}
+};
 
 export default App;
